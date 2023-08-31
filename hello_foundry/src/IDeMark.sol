@@ -5,6 +5,9 @@ interface IDeMark {
 
     error AlreadyCompleted();
     error NotProposer();
+    error NotCompletor();
+    error MustBeBetweenOneAndFiveInclusive();
+    error AlreadyRated();
 
     event JobCreated(address proposer, uint256 payout, string jobDescription);
     event JobCompleted(address completedBy, uint256 jobId);
@@ -13,6 +16,10 @@ interface IDeMark {
         uint256 payout;
         string jobDescription;
         address completedBy;
+        uint256 createdAt;
+        uint256 completedAt;
+        uint8 proposerRating;
+        uint8 completorRating;
     }
 
     /**
@@ -23,5 +30,10 @@ interface IDeMark {
     /**
         @dev emits a 'JobCompleted' event
     */
-    function markComplete(uint256 jobId, address _completedBy) external payable;
+    function markComplete(uint256 jobId, address _completedBy, uint8 rating) external payable;
+
+    /**
+        @dev allows job completer to rate their experience with the job proposer
+     */
+    function rateProposer(uint256 jobId, uint8 rating) external payable;
 }
