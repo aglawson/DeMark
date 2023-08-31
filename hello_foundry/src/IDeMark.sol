@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 interface IDeMark {
 
-    error AlreadyCompleted();
+    error AlreadyCompletedOrCanceled();
     error NotProposer();
     error NotCompletor();
     error MustBeBetweenOneAndFiveInclusive();
@@ -11,6 +11,7 @@ interface IDeMark {
 
     event JobCreated(address proposer, uint256 payout, string jobDescription);
     event JobCompleted(address completedBy, uint256 jobId);
+    event JobCanceled(uint256 jobId);
     struct Job {
         address proposer;
         uint256 payout;
@@ -26,6 +27,8 @@ interface IDeMark {
         @dev emits a 'JobCreated' event
      */
     function proposeJob(string memory _jobDescription) external payable;
+
+    function cancelJob(uint256 jobId) external payable;
 
     /**
         @dev emits a 'JobCompleted' event

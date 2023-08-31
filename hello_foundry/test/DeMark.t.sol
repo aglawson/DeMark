@@ -15,4 +15,8 @@ contract CounterTest is Test {
         assertEq(10, demark.platformFee());
     }
 
+    function test_proposeJob() public {
+        demark.proposeJob("Hello, World!");
+    }
+
 }

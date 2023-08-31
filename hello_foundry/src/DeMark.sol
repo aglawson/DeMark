@@ -46,9 +46,21 @@ contract DeMark is Ownable, IDeMark {
         emit JobCreated(_msgSender(), msg.value, _jobDescription);
     }
 
+    function cancelJob(uint256 jobId) external payable onlyProposer(jobId) override {
+        if(jobs[jobId].completedBy != address(0)) {
+            revert AlreadyCompletedOrCanceled();
+        }
+        jobs[jobId].completedBy = jobs[jobId].proposer;
+
+        (bool success,) = jobs[jobId].proposer.call{value: jobs[jobId].payout}("");
+        require(success, "Transfer Failure");
+
+        emit JobCanceled(jobId);
+    }
+
     function markComplete(uint256 jobId, address _completedBy, uint8 rating) external payable override {
-        if(jobs[jobId].completedBy == address(0)) {
-            revert AlreadyCompleted();
+        if(jobs[jobId].completedBy != address(0)) {
+            revert AlreadyCompletedOrCanceled();
         }
         jobs[jobId].completedBy = _completedBy;
 
