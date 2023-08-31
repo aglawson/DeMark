@@ -36,4 +36,9 @@ interface IDeMark {
         @dev allows job completer to rate their experience with the job proposer
      */
     function rateProposer(uint256 jobId, uint8 rating) external payable;
+
+    /**
+        @dev calculates average rating of 'user' for their role as 'proposerOrCompletor'
+     */
+    function getAverageRating(string memory proposerOrCompletor, address user) external view returns(uint256);
 }

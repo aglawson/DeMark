@@ -18,7 +18,7 @@ contract DeMark is Ownable, IDeMark {
 
     constructor(uint256 _platformFee) Ownable(_msgSender()) {
         require(_platformFee > 0, "Platform fee must be > 0");
-        
+
         platformFee = _platformFee;
     }
 
@@ -59,6 +59,12 @@ contract DeMark is Ownable, IDeMark {
 
         jobs[jobId].completedAt = block.timestamp;
 
+        /**
+            @dev fee calculation gets 1% of payout and multiplies that by platformFee
+                ex. if payout is 1 eth and platform fee is 10%, calculation would be
+                    1eth / 100 * 10 => 0.01eth * 10 => 0.1eth
+                    real values are in wei to avoid losing decimals
+         */
         uint256 fee = (jobs[jobId].payout / 100) * platformFee;
         uint256 finalPayout = jobs[jobId].payout - fee;
 
@@ -81,5 +87,26 @@ contract DeMark is Ownable, IDeMark {
         ratings[jobs[jobId].proposer]['proposer'].push(rating);
     }
 
+    function getAverageRating(string memory proposerOrCompletor, address user) public view override returns(uint256) {
+        uint256 averageRating;
+        uint256 sumOfRatings;
+        uint256 numOfRatings = ratings[user][proposerOrCompletor].length;
 
+        if(numOfRatings == 0) {
+            return averageRating; // returns 0
+        }
+
+        for(uint i = 0; i < numOfRatings; i++) {
+            sumOfRatings += ratings[user][proposerOrCompletor][i];
+        }
+
+        /**
+            @note averageRating will be some 3 digit number
+            ex. if a user's ratings are [1, 5, 2, 3] the calculation will be
+                11 * 100 / 4 = 275 => corresponds to a 2.75/5 average rating
+        */ 
+        averageRating = (sumOfRatings * 100) / numOfRatings;
+
+        return averageRating;
+    }
 }
