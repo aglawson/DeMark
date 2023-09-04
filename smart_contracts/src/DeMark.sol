@@ -17,8 +17,6 @@ contract DeMark is Ownable, IDeMark {
     mapping(address => mapping(string => uint8[])) public ratings;
 
     constructor(uint256 _platformFee) Ownable(_msgSender()) {
-        require(_platformFee > 0, "Platform fee must be > 0");
-
         platformFee = _platformFee;
     }
 
@@ -41,6 +39,9 @@ contract DeMark is Ownable, IDeMark {
     }
 
     function proposeJob(string memory _jobDescription) external payable override {
+        if(msg.value < 100) {
+            revert PayoutLowerThan100Wei();
+        }
         jobs.push(Job(_msgSender(), msg.value, _jobDescription, address(0), block.timestamp, 0, 0, 0));
 
         emit JobCreated(_msgSender(), msg.value, _jobDescription);
@@ -120,5 +121,17 @@ contract DeMark is Ownable, IDeMark {
         averageRating = (sumOfRatings * 100) / numOfRatings;
 
         return averageRating;
+    }
+
+    function withdrawPlatformFees() external payable onlyOwner {
+        if(accumulatedFees == 0) {
+            revert();
+        }
+
+        uint256 val = accumulatedFees;
+        accumulatedFees = 0;
+
+        (bool success,) = payable(owner()).call{value: val}("");
+        require(success, "Transfer failure");
     }
 }

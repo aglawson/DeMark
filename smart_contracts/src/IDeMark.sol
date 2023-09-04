@@ -8,6 +8,7 @@ interface IDeMark {
     error NotCompletor();
     error MustBeBetweenOneAndFiveInclusive();
     error AlreadyRated();
+    error PayoutLowerThan100Wei();
 
     event JobCreated(address proposer, uint256 payout, string jobDescription);
     event JobCompleted(address completedBy, uint256 jobId);
