@@ -3,6 +3,13 @@ pragma solidity ^0.8.13;
 
 import {Ownable} from "./Ownable.sol";
 import {IDeMark} from "./IDeMark.sol";
+/**
+    DeMark is a protocol designed to facilitate the sale of blockchain-based
+    application software. Proposers will list jobs they need completed, sending 
+    the amount to be paid upfront. Completors will complete the job and compete to 
+    be selected by the Proposer. If selected, the completor will receive the payout
+    associated with the job minus a platform fee.
+ */
 contract DeMark is Ownable, IDeMark {
     uint256 public platformFee;
     uint256 public accumulatedFees;
