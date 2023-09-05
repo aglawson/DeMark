@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Ownable} from "./Ownable.sol";
 import {IDeMark} from "./IDeMark.sol";
+import {MarketBuyable} from "./MarketBuyable.sol";
 /**
     DeMark is a protocol designed to facilitate the sale of blockchain-based
     application software. Proposers will list jobs they need completed, sending 
@@ -22,6 +23,8 @@ contract DeMark is Ownable, IDeMark {
         ratings[userAddress]['completor'] => the array of ratings of userAddress as a completor
      */
     mapping(address => mapping(string => uint8[])) public ratings;
+
+    mapping(address => mapping(uint256 => address)) public submissions;
 
     constructor(uint256 _platformFee) Ownable(_msgSender()) {
         platformFee = _platformFee;
@@ -45,6 +48,14 @@ contract DeMark is Ownable, IDeMark {
         platformFee = _platformFee;
     }
 
+    function isContract(address _addr) public view returns (bool){
+        uint32 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return (size > 0);
+    }
+
     function proposeJob(string memory _jobDescription) external payable override {
         if(msg.value < 100) {
             revert PayoutLowerThan100Wei();
@@ -66,11 +77,40 @@ contract DeMark is Ownable, IDeMark {
         emit JobCanceled(jobId);
     }
 
+    function submitSolution(uint256 jobId, address _solutionContract) external payable override {
+        if(_msgSender() == jobs[jobId].proposer) {
+            revert ProposerCannotSubmit();
+        }
+        if(submissions[_msgSender()][jobId] != address(0)) {
+            revert AlreadySubmitted();
+        }
+        if(!isContract(_solutionContract)){
+            revert NotContract();
+        }
+        
+        MarketBuyable solution = MarketBuyable(_solutionContract);
+
+        if(solution.marketplaceContract() != address(this)) {
+            revert ContractNotBuyable();
+        }
+
+        submissions[_msgSender()][jobId] = _solutionContract;
+    }
+
     function markComplete(uint256 jobId, address _completedBy, uint8 rating) external payable override {
         if(jobs[jobId].completedBy != address(0)) {
             revert AlreadyCompletedOrCanceled();
         }
         jobs[jobId].completedBy = _completedBy;
+
+        if(submissions[_completedBy][jobId] == address(0)) {
+            revert NotASubmission();
+        }
+
+        MarketBuyable solution = MarketBuyable(submissions[_completedBy][jobId]);
+        solution.marketTransferOwnership(jobs[jobId].proposer);
+
+        require(solution.owner() == jobs[jobId].proposer, "Ownership transfer unsuccessful");
 
         if(rating < 1 || rating > 5) {
             revert MustBeBetweenOneAndFiveInclusive();
