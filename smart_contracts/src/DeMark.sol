@@ -93,11 +93,14 @@ contract DeMark is Ownable, IDeMark {
         if(solution.marketplaceContract() != address(this)) {
             revert ContractNotBuyable();
         }
+        if(solution.owner() != _msgSender()) {
+            revert SenderNotContractOwner();
+        }
 
         submissions[_msgSender()][jobId] = _solutionContract;
     }
 
-    function markComplete(uint256 jobId, address _completedBy, uint8 rating) external payable override {
+    function markComplete(uint256 jobId, address _completedBy) external payable override {
         if(jobs[jobId].completedBy != address(0)) {
             revert AlreadyCompletedOrCanceled();
         }
@@ -107,15 +110,16 @@ contract DeMark is Ownable, IDeMark {
             revert NotASubmission();
         }
 
+        /**
+            @note Will need to control for smart contracts that have malicious code pretending
+            to be MarketBuyalbe.sol in order to receive a payout without transferring
+            ownership of the contract. Similar to DEXs, no one can prevent malicious interactions
+            with this contract, but the frontend can detect and blacklist malicious contracts.
+        */
         MarketBuyable solution = MarketBuyable(submissions[_completedBy][jobId]);
         solution.marketTransferOwnership(jobs[jobId].proposer);
 
         require(solution.owner() == jobs[jobId].proposer, "Ownership transfer unsuccessful");
-
-        if(rating < 1 || rating > 5) {
-            revert MustBeBetweenOneAndFiveInclusive();
-        }
-        jobs[jobId].completorRating = rating;
 
         jobs[jobId].completedAt = block.timestamp;
 
@@ -127,13 +131,23 @@ contract DeMark is Ownable, IDeMark {
          */
         uint256 fee = (jobs[jobId].payout / 100) * platformFee;
         uint256 finalPayout = jobs[jobId].payout - fee;
-
         accumulatedFees += fee;
 
         (bool success,) = _completedBy.call{value: finalPayout}("");
         require(success, "payout failed");
 
         emit JobCompleted(_completedBy, jobId);
+    }
+
+    function rateCompletor(uint256 jobId, uint8 rating) external payable override onlyProposer(jobId) {
+        if(jobs[jobId].completorRating != 0) {
+            revert AlreadyRated();
+        }
+
+        if(rating < 1 || rating > 5) {
+            revert MustBeBetweenOneAndFiveInclusive();
+        }
+        ratings[jobs[jobId].completedBy]['completor'].push(rating);
     }
 
     function rateProposer(uint256 jobId, uint8 rating) external payable override onlyCompletor(jobId) {
