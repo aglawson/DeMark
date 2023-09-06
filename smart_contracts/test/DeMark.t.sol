@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Test} from "../lib/forge-std/src/Test.sol";
 import {DeMark} from "../src/DeMark.sol";
+import {MarketBuyable} from "../src/MarketBuyable.sol";
 
     error AlreadyCompletedOrCanceled();
     error NotProposer();
@@ -18,11 +19,21 @@ import {DeMark} from "../src/DeMark.sol";
     error SenderNotContractOwner();
     error OwnableUnauthorizedAccount(address account);
 
+contract ContractForSale is MarketBuyable{
+    constructor(address marketplace) MarketBuyable(marketplace) {}
+}
+
 contract CounterTest is Test {
     DeMark public demark;
+    ContractForSale public cfs;
 
     function setUp() public {
         demark = new DeMark(10);
+        cfs = new ContractForSale(address(demark));
+    }
+
+    function test_CFSInitializedCorrectly() public {
+        assertEq(cfs.marketplaceContract(), address(demark));
     }
 
     function test_platformFeeIs10() public {
@@ -45,7 +56,8 @@ contract CounterTest is Test {
         assertEq(0, demark.platformFee());
     }
 
-    function testFail_cancelJobAsNonProposer() public {
+    function test_RevertCancelJobWhen_CallerIsNotProposer() public {
+        vm.expectRevert();
         vm.prank(address(0));
         demark.cancelJob(0);
     }
