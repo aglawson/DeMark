@@ -23,7 +23,13 @@ contract DeMark is Ownable, IDeMark {
         ratings[userAddress]['proposer'] => the array of ratings of userAddress as a proposer
         ratings[userAddress]['completor'] => the array of ratings of userAddress as a completor
      */
-    mapping(address => mapping(string => uint8[])) public ratings;
+
+    struct Rating {
+        uint256 totalRating;
+        uint256 ratingCount;
+    }
+
+    mapping(address => mapping(string => Rating)) public ratings;
 
     mapping(address => mapping(uint256 => address)) public submissions;
 
@@ -138,51 +144,6 @@ contract DeMark is Ownable, IDeMark {
         emit JobCompleted(_completedBy, jobId);
     }
 
-    function rateCompletor(uint256 jobId, uint8 rating) external payable override onlyProposer(jobId) {
-        if(jobs[jobId].completorRating != 0) {
-            revert AlreadyRated();
-        }
-
-        if(rating < 1 || rating > 5) {
-            revert MustBeBetweenOneAndFiveInclusive();
-        }
-        ratings[jobs[jobId].completedBy]['completor'].push(rating);
-    }
-
-    function rateProposer(uint256 jobId, uint8 rating) external payable override onlyCompletor(jobId) {
-        if(jobs[jobId].proposerRating != 0) {
-            revert AlreadyRated();
-        }
-        
-        if(rating < 1 || rating > 5) {
-            revert MustBeBetweenOneAndFiveInclusive();
-        }
-        ratings[jobs[jobId].proposer]['proposer'].push(rating);
-    }
-
-    function getAverageRating(string memory proposerOrCompletor, address user) public view override returns(uint256) {
-        uint256 averageRating;
-        uint256 sumOfRatings;
-        uint256 numOfRatings = ratings[user][proposerOrCompletor].length;
-
-        if(numOfRatings == 0) {
-            return averageRating; // returns 0
-        }
-
-        for(uint i = 0; i < numOfRatings; i++) {
-            sumOfRatings += ratings[user][proposerOrCompletor][i];
-        }
-
-        /**
-            @note averageRating will be some 3 digit number
-            ex. if a user's ratings are [1, 5, 2, 3] the calculation will be
-                11 * 100 / 4 = 275 => corresponds to a 2.75/5 average rating
-        */ 
-        averageRating = (sumOfRatings * 100) / numOfRatings;
-
-        return averageRating;
-    }
-
     function withdrawPlatformFees() external payable onlyOwner {
         if(accumulatedFees == 0) {
             revert();
@@ -193,5 +154,48 @@ contract DeMark is Ownable, IDeMark {
 
         (bool success,) = payable(owner()).call{value: val}("");
         require(success, "Transfer failure");
+    }
+
+    function rateCompletor(uint256 jobId, uint8 rating) external payable override onlyProposer(jobId) {
+        if(jobs[jobId].completorRating != 0) {
+            revert AlreadyRated();
+        }
+
+        if(rating < 1 || rating > 5) {
+            revert MustBeBetweenOneAndFiveInclusive();
+        }
+        ratings[jobs[jobId].completedBy]['completor'].totalRating += rating;
+        ratings[jobs[jobId].completedBy]['completor'].ratingCount += 1;
+    }
+
+    function rateProposer(uint256 jobId, uint8 rating) external payable override onlyCompletor(jobId) {
+        if(jobs[jobId].proposerRating != 0) {
+            revert AlreadyRated();
+        }
+
+        if(rating < 1 || rating > 5) {
+            revert MustBeBetweenOneAndFiveInclusive();
+        }
+        ratings[jobs[jobId].proposer]['proposer'].totalRating += rating;
+        ratings[jobs[jobId].proposer]['proposer'].ratingCount += 1;
+    }
+
+    function getAverageRating(string memory proposerOrCompletor, address user) public view override returns(uint256) {
+        uint256 averageRating;
+        uint256 totalRatings = ratings[user][proposerOrCompletor].totalRating;
+        uint256 numOfRatings = ratings[user][proposerOrCompletor].ratingCount;
+
+        if(numOfRatings == 0) {
+            return averageRating; // returns 0
+        }
+
+        /**
+            @note averageRating will be some 3 digit number
+            ex. if a user's ratings are [1, 5, 2, 3] the calculation will be
+                11 * 100 / 4 = 275 => corresponds to a 2.75/5 average rating
+        */ 
+        averageRating = (totalRatings * 100) / numOfRatings;
+
+        return averageRating;
     }
 }
