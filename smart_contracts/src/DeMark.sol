@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
+
 pragma solidity ^0.8.13;
 
 import {Ownable} from "./Ownable.sol";
@@ -69,7 +70,7 @@ contract DeMark is Ownable, IDeMark {
         if(jobs[jobId].completedBy != address(0)) {
             revert AlreadyCompletedOrCanceled();
         }
-        jobs[jobId].completedBy = jobs[jobId].proposer;
+        jobs[jobId].completedBy = jobs[jobId].proposer; // Protects from reentrancy
 
         (bool success,) = jobs[jobId].proposer.call{value: jobs[jobId].payout}("");
         require(success, "Transfer Failure");
@@ -104,12 +105,11 @@ contract DeMark is Ownable, IDeMark {
         if(jobs[jobId].completedBy != address(0)) {
             revert AlreadyCompletedOrCanceled();
         }
-        jobs[jobId].completedBy = _completedBy;
+        jobs[jobId].completedBy = _completedBy; // Protects from reentrancy
 
         if(submissions[_completedBy][jobId] == address(0)) {
             revert NotASubmission();
         }
-
         /**
             @note Will need to control for smart contracts that have malicious code pretending
             to be MarketBuyalbe.sol in order to receive a payout without transferring
@@ -122,7 +122,6 @@ contract DeMark is Ownable, IDeMark {
         require(solution.owner() == jobs[jobId].proposer, "Ownership transfer unsuccessful");
 
         jobs[jobId].completedAt = block.timestamp;
-
         /**
             @dev fee calculation gets 1% of payout and multiplies that by platformFee
                 ex. if payout is 1 eth and platform fee is 10%, calculation would be
@@ -188,9 +187,9 @@ contract DeMark is Ownable, IDeMark {
         if(accumulatedFees == 0) {
             revert();
         }
+        accumulatedFees = 0; // Protects from reentrancy
 
         uint256 val = accumulatedFees;
-        accumulatedFees = 0;
 
         (bool success,) = payable(owner()).call{value: val}("");
         require(success, "Transfer failure");
