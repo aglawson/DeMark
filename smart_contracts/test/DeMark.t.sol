@@ -61,5 +61,18 @@ contract CounterTest is Test {
         vm.prank(address(0));
         demark.cancelJob(0);
     }
+    
+    function test_RevertSetPlatformFeeWhen_CallerIsNotOwner() public {
+        vm.expectRevert();
+        vm.prank(address(0));
+        demark.setPlatformFee(0);
+    }
+
+    function test_RevertWithdrawPlatformFeesWhen_CallerIsNotOwner() public {
+        vm.expectRevert();
+        vm.prank(address(0));
+        demark.withdrawPlatformFees();
+    }
+    
 
 }
