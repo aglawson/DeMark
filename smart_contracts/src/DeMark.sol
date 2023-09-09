@@ -137,9 +137,8 @@ contract DeMark is Ownable, IDeMark {
         if(accumulatedFees == 0) {
             revert();
         }
-        accumulatedFees = 0; // Protects from reentrancy
-
         uint256 val = accumulatedFees;
+        accumulatedFees = 0; // Protects from reentrancy
 
         (bool success,) = payable(owner()).call{value: val}("");
         require(success, "Transfer failure");
