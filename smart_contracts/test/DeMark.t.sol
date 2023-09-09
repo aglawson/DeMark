@@ -68,11 +68,17 @@ contract CounterTest is Test {
         demark.setPlatformFee(0);
     }
 
+    function test_RevertSubmitSolutionWhen_CallerIsProposer() public {
+        demark.proposeJob{value: 1000000000000000000}("Test Job");
+
+        ContractForSale cfs2 = new ContractForSale(address(demark));
+        vm.expectRevert();
+        demark.submitSolution(0, address(cfs2));
+    }
+
     function test_RevertWithdrawPlatformFeesWhen_CallerIsNotOwner() public {
         vm.expectRevert();
         vm.prank(address(0));
         demark.withdrawPlatformFees();
     }
-    
-
 }
