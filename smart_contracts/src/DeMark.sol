@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-
 pragma solidity ^0.8.13;
-
 import {Ownable} from "./Ownable.sol";
 import {IDeMark} from "./IDeMark.sol";
 import {MarketBuyable} from "./MarketBuyable.sol";
+
 /**
     DeMark is a protocol designed to facilitate the sale of blockchain-based
     application software. Proposers will list jobs they need completed, sending 
@@ -23,16 +22,13 @@ contract DeMark is Ownable, IDeMark {
         ratings[userAddress]['proposer'] => the array of ratings of userAddress as a proposer
         ratings[userAddress]['completor'] => the array of ratings of userAddress as a completor
      */
-
     struct Rating {
         uint256 totalRating;
         uint256 ratingCount;
     }
 
     mapping(address => mapping(string => Rating)) public ratings;
-
     mapping(address => mapping(uint256 => address)) public submissions;
-
     constructor(uint256 _platformFee) Ownable(_msgSender()) {
         platformFee = _platformFee;
     }
@@ -50,11 +46,9 @@ contract DeMark is Ownable, IDeMark {
         }
         _;
     }
-
     function setPlatformFee(uint256 _platformFee) external payable onlyOwner {
         platformFee = _platformFee;
     }
-
     function isContract(address _addr) public view returns (bool){
         uint32 size;
         assembly {
@@ -62,7 +56,6 @@ contract DeMark is Ownable, IDeMark {
         }
         return (size > 0);
     }
-
     function proposeJob(string memory _jobDescription) external payable override {
         if(msg.value < 100) {
             revert PayoutLowerThan100Wei();
@@ -71,7 +64,6 @@ contract DeMark is Ownable, IDeMark {
 
         emit JobCreated(_msgSender(), msg.value, _jobDescription);
     }
-
     function cancelJob(uint256 jobId) external payable onlyProposer(jobId) override {
         if(jobs[jobId].completedBy != address(0)) {
             revert AlreadyCompletedOrCanceled();
@@ -83,7 +75,6 @@ contract DeMark is Ownable, IDeMark {
 
         emit JobCanceled(jobId);
     }
-
     function submitSolution(uint256 jobId, address _solutionContract) external payable override {
         if(_msgSender() == jobs[jobId].proposer) {
             revert ProposerCannotSubmit();
@@ -106,7 +97,6 @@ contract DeMark is Ownable, IDeMark {
 
         submissions[_msgSender()][jobId] = _solutionContract;
     }
-
     function markComplete(uint256 jobId, address _completedBy) external payable override {
         if(jobs[jobId].completedBy != address(0)) {
             revert AlreadyCompletedOrCanceled();
@@ -143,7 +133,6 @@ contract DeMark is Ownable, IDeMark {
 
         emit JobCompleted(_completedBy, jobId);
     }
-
     function withdrawPlatformFees() external payable onlyOwner {
         if(accumulatedFees == 0) {
             revert();
