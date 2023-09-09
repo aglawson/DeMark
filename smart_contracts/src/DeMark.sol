@@ -46,9 +46,11 @@ contract DeMark is Ownable, IDeMark {
         }
         _;
     }
+
     function setPlatformFee(uint256 _platformFee) external payable onlyOwner {
         platformFee = _platformFee;
     }
+
     function isContract(address _addr) public view returns (bool){
         uint32 size;
         assembly {
@@ -56,6 +58,7 @@ contract DeMark is Ownable, IDeMark {
         }
         return (size > 0);
     }
+
     function proposeJob(string memory _jobDescription) external payable override {
         if(msg.value < 100) {
             revert PayoutLowerThan100Wei();
@@ -64,6 +67,7 @@ contract DeMark is Ownable, IDeMark {
 
         emit JobCreated(_msgSender(), msg.value, _jobDescription);
     }
+
     function cancelJob(uint256 jobId) external payable onlyProposer(jobId) override {
         if(jobs[jobId].completedBy != address(0)) {
             revert AlreadyCompletedOrCanceled();
@@ -75,6 +79,7 @@ contract DeMark is Ownable, IDeMark {
 
         emit JobCanceled(jobId);
     }
+
     function submitSolution(uint256 jobId, address _solutionContract) external payable override {
         if(_msgSender() == jobs[jobId].proposer) {
             revert ProposerCannotSubmit();
@@ -97,6 +102,7 @@ contract DeMark is Ownable, IDeMark {
 
         submissions[_msgSender()][jobId] = _solutionContract;
     }
+
     function markComplete(uint256 jobId, address _completedBy) external payable override {
         if(jobs[jobId].completedBy != address(0)) {
             revert AlreadyCompletedOrCanceled();
@@ -133,6 +139,7 @@ contract DeMark is Ownable, IDeMark {
 
         emit JobCompleted(_completedBy, jobId);
     }
+
     function withdrawPlatformFees() external payable onlyOwner {
         if(accumulatedFees == 0) {
             revert();
