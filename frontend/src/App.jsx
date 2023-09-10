@@ -17,7 +17,7 @@ function App() {
 
   async function init() {
     if (window.ethereum == null) {
-      console.log("MetaMask not installed");
+      toast.error("MetaMask not installed");
     } else {
       provider = new ethers.BrowserProvider(window.ethereum);
       const nw = await provider.getNetwork();
