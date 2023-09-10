@@ -14,6 +14,7 @@ import {MarketBuyable} from "./MarketBuyable.sol";
 contract DeMark is Ownable, IDeMark {
     uint256 public platformFee;
     uint256 public accumulatedFees;
+    MarketBuyable public solution;
 
     Job[] public jobs;
 
@@ -91,7 +92,7 @@ contract DeMark is Ownable, IDeMark {
             revert NotContract();
         }
         
-        MarketBuyable solution = MarketBuyable(_solutionContract);
+        solution = MarketBuyable(_solutionContract);
 
         if(solution.marketplaceContract() != address(this)) {
             revert ContractNotBuyable();
@@ -118,7 +119,7 @@ contract DeMark is Ownable, IDeMark {
             ownership of the contract. Similar to DEXs, no one can prevent malicious interactions
             with this contract, but the frontend can detect and blacklist malicious contracts.
         */
-        MarketBuyable solution = MarketBuyable(submissions[_completedBy][jobId]);
+        solution = MarketBuyable(submissions[_completedBy][jobId]);
         solution.marketTransferOwnership(jobs[jobId].proposer);
 
         require(solution.owner() == jobs[jobId].proposer, "Ownership transfer unsuccessful");
@@ -192,5 +193,25 @@ contract DeMark is Ownable, IDeMark {
         averageRating = (totalRatings * 100) / numOfRatings;
 
         return averageRating;
+    }
+
+    function getIncompleteJobs() public view returns (Job[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < jobs.length; i++) {
+            if (jobs[i].completedAt == 0) {
+                count++;
+            }
+        }
+
+        Job[] memory incompleteJobs = new Job[](count);
+        uint256 index = 0;
+        for (uint256 i = 0; i < jobs.length; i++) {
+            if (jobs[i].completedAt == 0) {
+                incompleteJobs[index] = jobs[i];
+                index++;
+            }
+        }
+
+        return incompleteJobs;
     }
 }
