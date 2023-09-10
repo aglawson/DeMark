@@ -159,7 +159,7 @@ function App() {
       </div>
       )}
 
-      <button style={{display: proposeForm ? 'none' : ''}} onClick={() => setProposeForm(true)}>Propose Job</button>
+      <button style={{display: proposeForm ? 'none' : userAddress == null ? 'none' : ''}} onClick={() => setProposeForm(true)}>Propose Job</button>
       <form style={{display: proposeForm ? '' : 'none'}} onSubmit={(e) => createProposal(e, document.getElementById('jobDescription').value)}>
         <input id='jobDescription' placeholder='Brief Job Description'></input>
         <input id='jobPrice' placeholder='Price in ETH'></input>
