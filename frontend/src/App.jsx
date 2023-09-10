@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import {ethers} from 'ethers'
 import {abi} from './assets/abi'
@@ -12,19 +10,56 @@ const contractAddress = '0xe317aBa6C197fa14d199ff4F2De4b1c33EF6965A'
 
 function App() {
   const [userAddress, setUserAddress] = useState(null)
-  const [network, setNetwork] = useState(null)
   const [jobs, setJobs] = useState([])
 
   async function init() {
     if (window.ethereum == null) {
-      console.log("MetaMask not installed")
+      console.log("MetaMask not installed");
     } else {
-      provider = new ethers.BrowserProvider(window.ethereum)
-      signer = await provider.getSigner()
-      contract = new ethers.Contract(contractAddress, abi, signer)
-      setUserAddress(await signer.getAddress())
-      const nw = await provider.getNetwork()
-      setNetwork(nw.chainId)
+      provider = new ethers.BrowserProvider(window.ethereum);
+      const nw = await provider.getNetwork();
+      // Check if the network is correct, if not, change it
+      if (Number(nw.chainId) !== 534351) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x8274f' }],
+          })
+          // window.location.reload();
+          provider = new ethers.BrowserProvider(window.ethereum);
+
+        } catch (switchError) {
+          console.log({ switchError })
+          if (switchError.code === 4902) {
+            try {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{ 
+                  chainId: '0x8274f',
+                  chainName: 'Scroll Sepolia Testnet',
+                  nativeCurrency: {
+                    name: 'ETH',
+                    symbol: 'ETH',
+                    decimals: 18
+                  },
+                  rpcUrls: ['https://scroll-sepolia.blockpi.network/v1/rpc/public'],
+                  blockExplorerUrls: ['https://sepolia-blockscout.scroll.io']
+                }],
+              });
+              window.location.reload();
+                    provider = new ethers.BrowserProvider(window.ethereum);
+
+            } catch (addError) {
+              console.error(addError);
+            }
+          }
+        }
+      }
+
+
+      signer = await provider.getSigner();
+      contract = new ethers.Contract(contractAddress, abi, signer);
+      setUserAddress(await signer.getAddress());
 
       await getProposals()
       toast.success("Connected!")
@@ -87,11 +122,6 @@ function App() {
         draggable
         pauseOnHover
       />
-      <div style={{display: Number(network) == 534351 ? 'none' : ''}}>
-        <a href="https://chainlist.org/?search=scroll&testnets=true" target="_blank">
-          {'Add Scroll Sepolia to MetaMask'}
-        </a>
-      </div>
       <div>
         <button style={{display: userAddress == null ? '' : 'none'}} onClick={() => init()}>
           {'Connect Wallet'}
@@ -125,3 +155,4 @@ function App() {
 }
 
 export default App
+
