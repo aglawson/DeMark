@@ -6,7 +6,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 let provider, signer, contract = null;
-const contractAddress = '0xe317aBa6C197fa14d199ff4F2De4b1c33EF6965A'
+const contractAddress = '0x8f9f0744Ed2f0fb1587D2ddFed6d7A7f876cBc9C'
 
 function App() {
   const [userAddress, setUserAddress] = useState(null)
@@ -56,12 +56,15 @@ function App() {
         }
       }
 
-
       signer = await provider.getSigner();
       contract = new ethers.Contract(contractAddress, abi, signer);
       setUserAddress(await signer.getAddress());
 
       await getProposals()
+      for(let i = 0; i < jobs.length; i++) {
+        let subs = await getSubmissions(i)
+        console.log(subs)
+      }
       toast.success("Connected!")
     }
   }
@@ -73,7 +76,8 @@ function App() {
   }
 
   async function getSubmissions(jobId) {
-
+    const submissions = await contract.getSubmissionsForJob(jobId)
+    return submissions
   }
 
   async function createProposal(jobDescription) {
@@ -135,6 +139,10 @@ function App() {
       </div>
       )}
 
+      <div>
+        
+      </div>
+
       <div style={{display: jobs.length > 0 ? '' : 'none'}} className='w-full'>
         <h1>Open Jobs</h1>
         <div className='jobs'>
@@ -147,7 +155,7 @@ function App() {
                 <span className='price'>{Number(job[1]) < 100000000000000 ? `<${ethers.formatEther(100000000000000)}` : `${(Number(ethers.formatEther(job[1]))).toFixed(4)}`}Ξ</span>
               </div>
               <input id='contractAddress'></input>
-              <button onClick={() => submitSolution(index)}>Apply For Job</button>
+              <button onClick={() => submitSolution(index)}>Submit Your Solution</button>
               <div className='divider'/>
               </div>
           ))}

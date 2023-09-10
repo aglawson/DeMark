@@ -105,15 +105,15 @@ contract DeMark is Ownable, IDeMark {
             revert SenderNotContractOwner();
         }
 
-        submissions.push(Submission(_msgSender(), _solutionContract));
-        emit ContractSubmitted(_msgSender(), _solutionContract)
+        submissions[jobId].push(Submission(_msgSender(), _solutionContract));
+        emit ContractSubmitted(jobId, _msgSender(), _solutionContract);
     }
 
     function markComplete(uint256 jobId, uint256 submissionId) external payable override {
         if(jobs[jobId].completedBy != address(0)) {
             revert AlreadyCompletedOrCanceled();
         }
-        jobs[jobId].completedBy = _completedBy; // Protects from reentrancy
+        jobs[jobId].completedBy = submissions[jobId][submissionId].submitter; // Protects from reentrancy
 
         if(submissions[jobId][submissionId].submitter == address(0)) {
             revert NotASubmission();
@@ -124,7 +124,7 @@ contract DeMark is Ownable, IDeMark {
             ownership of the contract. Similar to DEXs, no one can prevent malicious interactions
             with this contract, but the frontend can detect and blacklist malicious contracts.
         */
-        solution = MarketBuyable(submissions[jobId][submissionId]);
+        solution = MarketBuyable(submissions[jobId][submissionId].solutionContract);
         solution.marketTransferOwnership(jobs[jobId].proposer);
 
         require(solution.owner() == jobs[jobId].proposer, "Ownership transfer unsuccessful");
@@ -140,10 +140,10 @@ contract DeMark is Ownable, IDeMark {
         uint256 finalPayout = jobs[jobId].payout - fee;
         accumulatedFees += fee;
 
-        (bool success,) = _completedBy.call{value: finalPayout}("");
+        (bool success,) = submissions[jobId][submissionId].submitter.call{value: finalPayout}("");
         require(success, "payout failed");
 
-        emit JobCompleted(_completedBy, jobId);
+        emit JobCompleted(submissions[jobId][submissionId].submitter, jobId);
     }
 
     function withdrawPlatformFees() external payable onlyOwner {
@@ -220,21 +220,8 @@ contract DeMark is Ownable, IDeMark {
         return incompleteJobs;
     }
 
-    function getSubmissionsForJob(uint256 jobId) public view returns (Job[] memory) {
-        uint256 count = 0;
-        for (uint256 i = 0; i < submissions[jobId].length; i++) {
-            count++;
-        }
-
-        Job[] memory subs = new Submission[](count);
-        uint256 index = 0;
-        for (uint256 i = 0; i < submissions.length; i++) {
-                subs[index] = submissions[i]
-                index++;
-            }
-        }
-
-        return subs;
+    function getSubmissionsForJob(uint256 jobId) public view returns (Submission[] memory) {
+        return submissions[jobId];
     }
 
 }

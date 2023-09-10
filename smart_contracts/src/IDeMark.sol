@@ -44,7 +44,7 @@ interface IDeMark {
     /**
         @dev emits a 'JobCompleted' event
     */
-    function markComplete(uint256 jobId, address _completedBy) external payable;
+    function markComplete(uint256 jobId, uint256 submissionId)external payable;
 
     /**
         @dev allows job proposer to rate their experience with job completor
