@@ -39,20 +39,22 @@ function App() {
   async function createProposal(jobDescription) {
     try{
       const tx = await contract.createProposal(jobDescription)
+      await tx.wait(1)
       toast.success("Proposal created successfully!")
     } catch(error) {
       console.log(error.reason)
-      toast.error(`Error: ${error.reason}`)
+      toast.error(`Error: ${error}`)
     }
   }
 
   async function acceptSubmission(completedBy) {
     try {
       const tx = await contract.markComplete(completedBy)
+      await tx.wait(1)
       toast.success("Transaction complete!")
     } catch (error) {
       console.log(error.reason)
-      toast.error(`Error: ${error.reason}`)
+      toast.error(`Error: ${error}`)
     }
   }
   
@@ -61,9 +63,10 @@ function App() {
     try {
       const tx = await contract.submitSolution(key, document.getElementById('contractAddress').value)
       console.log(tx)
+      await tx.wait(1)
       toast.success("Contract submitted!")
     } catch(error) {
-      toast.error(`Error: ${error.reason}`)
+      toast.error(`Error: ${error}`)
     }
 
   }
