@@ -7,10 +7,13 @@ import 'react-toastify/dist/ReactToastify.css';
 
 let provider, signer, contract = null;
 const contractAddress = '0x8f9f0744Ed2f0fb1587D2ddFed6d7A7f876cBc9C'
+const explorerAddress = 'https://sepolia-blockscout.scroll.io/address/'
 
 function App() {
   const [userAddress, setUserAddress] = useState(null)
   const [jobs, setJobs] = useState([])
+  const [proposeForm, setProposeForm] = useState(false)
+  const [submissions, setSubmissions] = useState([])
 
   async function init() {
     if (window.ethereum == null) {
@@ -60,8 +63,8 @@ function App() {
       contract = new ethers.Contract(contractAddress, abi, signer);
       setUserAddress(await signer.getAddress());
 
-      await getProposals()
-      for(let i = 0; i < jobs.length; i++) {
+      const props = await getProposals()
+      for(let i = 0; i < props.length; i++) {
         let subs = await getSubmissions(i)
         console.log(subs)
       }
@@ -73,16 +76,31 @@ function App() {
     const proposals = await contract.getIncompleteJobs()
     console.log(proposals)
     setJobs(proposals)
+    return proposals
   }
 
   async function getSubmissions(jobId) {
-    const submissions = await contract.getSubmissionsForJob(jobId)
+    const submissionsData = await contract.getSubmissionsForJob(0)
+    let temp = {
+      jobId: jobId,
+      subs: []
+    }
+    for(let i = 0; i < submissionsData.length; i++) {
+      console.log(submissionsData[i])
+      temp.subs.push(submissionsData[i])
+    }
+    let arrayTemp = submissions
+    arrayTemp.push(temp)
+    setSubmissions(arrayTemp)
+    console.log(arrayTemp)
+    
     return submissions
   }
 
-  async function createProposal(jobDescription) {
+  async function createProposal(e) {
+    e.preventDefault()
     try {
-      const tx = await contract.createProposal(jobDescription)
+      const tx = await contract.proposeJob(document.getElementById('jobDescription').value, {value: '1000000000000000'})
       await tx.wait(1)
       toast.success("Proposal created successfully!")
     } catch(error) {
@@ -91,9 +109,9 @@ function App() {
     }
   }
 
-  async function acceptSubmission(completedBy) {
+  async function acceptSubmission(jobId, submissionId) {
     try {
-      const tx = await contract.markComplete(completedBy)
+      const tx = await contract.markComplete(jobId, submissionId)
       await tx.wait(1)
       toast.success("Transaction complete!")
     } catch (error) {
@@ -139,9 +157,12 @@ function App() {
       </div>
       )}
 
-      <div>
-        
-      </div>
+      <button style={{display: proposeForm ? 'none' : ''}} onClick={() => setProposeForm(true)}>Propose Job</button>
+      <form style={{display: proposeForm ? '' : 'none'}} onSubmit={(e) => createProposal(e, document.getElementById('jobDescription').value)}>
+        <input id='jobDescription' placeholder='Brief Job Description'></input>
+        <button type='submit'>Submit Job</button>
+        <button onClick={(e) => {e.preventDefault(); setProposeForm(false)}}>Cancel</button>
+      </form>
 
       <div style={{display: jobs.length > 0 ? '' : 'none'}} className='w-full'>
         <h1>Open Jobs</h1>
@@ -154,9 +175,10 @@ function App() {
                 <span>This job consists of making a {job[2]}. You have until September 29th to submit.</span>
                 <span className='price'>{Number(job[1]) < 100000000000000 ? `<${ethers.formatEther(100000000000000)}` : `${(Number(ethers.formatEther(job[1]))).toFixed(4)}`}Ξ</span>
               </div>
-              <input id='contractAddress'></input>
-              <button onClick={() => submitSolution(index)}>Submit Your Solution</button>
-              <div className='divider'/>
+              <input id='contractAddress' placeholder='Contract Address' style={{display: job[0] == userAddress ? 'none' : ''}}></input>
+              <button onClick={() => submitSolution(index)} style={{display: job[0] == userAddress ? 'none' : ''}}>Submit Your Solution</button>
+              <input style={{display: userAddress == job[0] ? '' : 'none'}} type='text' placeholder='Submission ID' id='subId'></input>
+              <button style={{display: userAddress == job[0] ? '' : 'none'}}  onClick={() => acceptSubmission(index, document.getElementById('subId').value)}>Accept Submission</button>
               </div>
           ))}
         </div>
