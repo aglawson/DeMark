@@ -100,7 +100,9 @@ function App() {
   async function createProposal(e) {
     e.preventDefault()
     try {
-      const tx = await contract.proposeJob(document.getElementById('jobDescription').value, {value: '1000000000000000'})
+      let payout = document.getElementById('jobPrice').value
+      payout = payout * 10**18
+      const tx = await contract.proposeJob(document.getElementById('jobDescription').value, {value: payout.toString()})
       await tx.wait(1)
       toast.success("Proposal created successfully!")
     } catch(error) {
@@ -160,6 +162,7 @@ function App() {
       <button style={{display: proposeForm ? 'none' : ''}} onClick={() => setProposeForm(true)}>Propose Job</button>
       <form style={{display: proposeForm ? '' : 'none'}} onSubmit={(e) => createProposal(e, document.getElementById('jobDescription').value)}>
         <input id='jobDescription' placeholder='Brief Job Description'></input>
+        <input id='jobPrice' placeholder='Price in ETH'></input>
         <button type='submit'>Submit Job</button>
         <button onClick={(e) => {e.preventDefault(); setProposeForm(false)}}>Cancel</button>
       </form>
