@@ -27,6 +27,7 @@ function App() {
       setNetwork(nw.chainId)
 
       await getProposals()
+      toast.success("Connected!")
     }
   }
 
@@ -36,8 +37,12 @@ function App() {
     setJobs(proposals)
   }
 
+  async function getSubmissions(jobId) {
+
+  }
+
   async function createProposal(jobDescription) {
-    try{
+    try {
       const tx = await contract.createProposal(jobDescription)
       await tx.wait(1)
       toast.success("Proposal created successfully!")
@@ -72,7 +77,7 @@ function App() {
   return (
     <div className='w-full'>
       <ToastContainer
-        position="top-right"
+        position="bottom-right"
         autoClose={5000}
         hideProgressBar={false}
         newestOnTop={false}
@@ -92,6 +97,10 @@ function App() {
           {'Connect Wallet'}
         </button>
       </div>
+
+      <button style={{position: 'fixed', top: '1%', right: '1%'}}> 
+      {userAddress === null ? '' : userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length - 4, userAddress.length)}
+      </button>
 
       <div style={{display: jobs.length > 0 ? '' : 'none'}} className='w-full'>
         <h1>Open Jobs</h1>
