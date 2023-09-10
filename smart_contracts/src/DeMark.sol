@@ -29,7 +29,14 @@ contract DeMark is Ownable, IDeMark {
     }
 
     mapping(address => mapping(string => Rating)) public ratings;
-    mapping(address => mapping(uint256 => address)) public submissions;
+    struct Submission {
+        address submitter;
+        address solutionContract;
+    }
+
+    // The submissions mapping is used to quickly find all submissions related to a specific jobId.
+    // It maps from a jobId to an array of Submission structs.
+    mapping(uint256 => Submission[]) public submissions;
     constructor(uint256 _platformFee) Ownable(_msgSender()) {
         platformFee = _platformFee;
     }
@@ -85,9 +92,6 @@ contract DeMark is Ownable, IDeMark {
         if(_msgSender() == jobs[jobId].proposer) {
             revert ProposerCannotSubmit();
         }
-        if(submissions[_msgSender()][jobId] != address(0)) {
-            revert AlreadySubmitted();
-        }
         if(!isContract(_solutionContract)){
             revert NotContract();
         }
@@ -101,16 +105,17 @@ contract DeMark is Ownable, IDeMark {
             revert SenderNotContractOwner();
         }
 
-        submissions[_msgSender()][jobId] = _solutionContract;
+        submissions.push(Submission(_msgSender(), _solutionContract));
+        emit ContractSubmitted(_msgSender(), _solutionContract)
     }
 
-    function markComplete(uint256 jobId, address _completedBy) external payable override {
+    function markComplete(uint256 jobId, uint256 submissionId) external payable override {
         if(jobs[jobId].completedBy != address(0)) {
             revert AlreadyCompletedOrCanceled();
         }
         jobs[jobId].completedBy = _completedBy; // Protects from reentrancy
 
-        if(submissions[_completedBy][jobId] == address(0)) {
+        if(submissions[jobId][submissionId].submitter == address(0)) {
             revert NotASubmission();
         }
         /**
@@ -119,7 +124,7 @@ contract DeMark is Ownable, IDeMark {
             ownership of the contract. Similar to DEXs, no one can prevent malicious interactions
             with this contract, but the frontend can detect and blacklist malicious contracts.
         */
-        solution = MarketBuyable(submissions[_completedBy][jobId]);
+        solution = MarketBuyable(submissions[jobId][submissionId]);
         solution.marketTransferOwnership(jobs[jobId].proposer);
 
         require(solution.owner() == jobs[jobId].proposer, "Ownership transfer unsuccessful");
@@ -214,4 +219,22 @@ contract DeMark is Ownable, IDeMark {
 
         return incompleteJobs;
     }
+
+    function getSubmissionsForJob(uint256 jobId) public view returns (Job[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < submissions[jobId].length; i++) {
+            count++;
+        }
+
+        Job[] memory subs = new Submission[](count);
+        uint256 index = 0;
+        for (uint256 i = 0; i < submissions.length; i++) {
+                subs[index] = submissions[i]
+                index++;
+            }
+        }
+
+        return subs;
+    }
+
 }

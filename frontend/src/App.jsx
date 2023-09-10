@@ -56,8 +56,7 @@ function App() {
       console.log(error.reason)
       toast.error(`Error: ${error}`)
     }
-  }
-  
+  }  
 
   async function submitSolution(key) {
     try {
@@ -68,7 +67,6 @@ function App() {
     } catch(error) {
       toast.error(`Error: ${error}`)
     }
-
   }
 
   return (
