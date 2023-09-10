@@ -122,15 +122,18 @@ function App() {
         draggable
         pauseOnHover
       />
-      <div>
-        <button style={{display: userAddress == null ? '' : 'none'}} onClick={() => init()}>
+
+      {userAddress ? (
+        <button style={{position: 'fixed', top: '1%', right: '1%'}}> 
+         {userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length - 4, userAddress.length)}
+        </button>
+      ): (
+        <div>
+        <button onClick={() => init()}>
           {'Connect Wallet'}
         </button>
       </div>
-
-      <button style={{position: 'fixed', top: '1%', right: '1%'}}> 
-      {userAddress === null ? '' : userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length - 4, userAddress.length)}
-      </button>
+      )}
 
       <div style={{display: jobs.length > 0 ? '' : 'none'}} className='w-full'>
         <h1>Open Jobs</h1>
