@@ -73,10 +73,18 @@ function App() {
   }
 
   async function getProposals() {
-    const proposals = await contract.getIncompleteJobs()
-    console.log(proposals)
-    setJobs(proposals)
-    return proposals
+    let arr = []
+    let index = 0
+    while(true) {
+      try{
+        arr.push(await contract.jobs(index))
+        index++
+      } catch (error) {
+        break;
+      }
+    }
+    setJobs(arr)
+    return arr
   }
 
   async function getSubmissions(jobId) {
