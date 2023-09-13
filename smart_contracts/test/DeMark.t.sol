@@ -81,4 +81,10 @@ contract CounterTest is Test {
         vm.prank(address(0));
         demark.withdrawPlatformFees();
     }
+
+    function test_RevertWithdrawPlatformFeesWhen_CalledByNonOwner() public {
+        vm.expectRevert();
+        vm.prank(address(0));
+        demark.withdrawPlatformFees();
+    }
 }

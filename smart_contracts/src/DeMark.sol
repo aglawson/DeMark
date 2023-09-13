@@ -95,10 +95,10 @@ contract DeMark is Ownable, IDeMark {
         if(!isContract(_solutionContract)){
             revert NotContract();
         }
-        
+
         solution = MarketBuyable(_solutionContract);
 
-        if(solution.marketplaceContract() != address(this)) {
+        if(!solution.isApproved(address(this))) {
             revert ContractNotBuyable();
         }
         if(solution.owner() != _msgSender()) {

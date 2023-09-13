@@ -9,31 +9,56 @@ pragma solidity ^0.8.0;
 import "./Ownable.sol";
 
 contract MarketBuyable is Ownable {
-    address public marketplaceContract;
-
-    error MarketplaceOnly();
+    mapping(address => bool) public approvedMarketplaces;
+    address[] public approvals;
 
     event listed(address seller, address contractAddress, uint256 price);
     event bought(address seller, address buyer, address contractAddress, uint256 price);
     event unlisted(address seller, address contractAddress);
 
-    constructor(address _marketplace) Ownable(_msgSender()) {
-        marketplaceContract = _marketplace;
-    }
+    constructor() Ownable(_msgSender()) {}
 
     modifier marketplaceOnly {
-        if(msg.sender != marketplaceContract) {
-            revert MarketplaceOnly();
+        if(!approvedMarketplaces[msg.sender]) {
+            revert("caller not approved");
         }
         _;
     }
 
-    function setMarketplaceAddress(address _marketplace) public onlyOwner {
-        marketplaceContract = _marketplace;
+    function approveMarketplace(address _marketplace) public onlyOwner {
+        if(approvedMarketplaces[_marketplace])
+            revert("already approved");
+
+        approvals.push(_marketplace);
+        approvedMarketplaces[_marketplace] = true;
     }
 
-    function revokeMarketplace() external onlyOwner {
-        setMarketplaceAddress(address(0));
+    function revokeMarketplace(address _marketplace) external onlyOwner {
+        if(!approvedMarketplaces[_marketplace])
+            revert("already not approved");
+
+        approvedMarketplaces[_marketplace] = false;
+        delete(approvals[indexOf(_marketplace)]);
+    }
+
+    function _clearApprovals() internal {
+        for(uint i = 0; i < approvals.length; i++) {
+            approvedMarketplaces[approvals[i]] = false;
+            delete(approvals[i]);
+        }
+    }
+
+    function indexOf(address _marketplace) public view returns(uint256){
+        for(uint i = 0; i < approvals.length; i++) {
+            if(approvals[i] == _marketplace)
+                return i;
+        }
+
+        return 0;
+    }
+
+    function isApproved(address _marketplace) public view returns(bool) {
+        return approvedMarketplaces[_marketplace];
     }
 
     function marketTransferOwnership(address _newOwner) external marketplaceOnly {

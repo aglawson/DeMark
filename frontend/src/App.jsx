@@ -130,6 +130,7 @@ function App() {
     }
   }  
 
+  
   async function submitSolution(key) {
     try {
       const tx = await contract.submitSolution(key, document.getElementById('contractAddress').value)
