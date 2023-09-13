@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 let provider, signer, contract = null;
 const contractAddress = '0x8f9f0744Ed2f0fb1587D2ddFed6d7A7f876cBc9C'
-const explorerAddress = 'https://sepolia-blockscout.scroll.io/address/'
+const explorerURL = 'https://sepolia-blockscout.scroll.io/address/'
 
 function App() {
   const [userAddress, setUserAddress] = useState(null)
@@ -180,9 +180,27 @@ function App() {
         <h1>Open Jobs</h1>
         <div className='jobs'>
           {jobs.map((job, index) => (
+            <div className='job' key={index} style={{display: job[3] == '0x0000000000000000000000000000000000000000' ? '' : 'none'}}>
+              <div className='job-info'>
+              <span className='client'>{job[0]}</span>
+                <h2>{job[2]}</h2>
+                <span>This job consists of making a {job[2]}. You have until September 29th to submit.</span>
+                <span className='price'>{Number(job[1]) < 100000000000000 ? `<${ethers.formatEther(100000000000000)}` : `${(Number(ethers.formatEther(job[1]))).toFixed(4)}`}Ξ</span>
+              </div>
+              <input id='contractAddress' placeholder='Contract Address' style={{display: job[0] == userAddress ? 'none' : ''}}></input>
+              <button onClick={() => submitSolution(index)} style={{display: job[0] == userAddress ? 'none' : ''}}>Submit Your Solution</button>
+              <input style={{display: userAddress == job[0] ? '' : 'none'}} type='text' placeholder='Submission ID' id='subId'></input>
+              <button style={{display: userAddress == job[0] ? '' : 'none'}}  onClick={() => acceptSubmission(index, document.getElementById('subId').value)}>Accept Submission</button>
+              </div>
+          ))}
+        </div>
+        <h1>Completed Jobs</h1>
+        <div className='jobs'>
+          {jobs.map((job, index) => (
             <div className='job' key={index} style={{display: job[3] == '0x0000000000000000000000000000000000000000' ? 'none' : ''}}>
               <div className='job-info'>
               <span className='client'>{job[0]}</span>
+              <span>{`Completed by: ${job[3]}`}</span>
                 <h2>{job[2]}</h2>
                 <span>This job consists of making a {job[2]}. You have until September 29th to submit.</span>
                 <span className='price'>{Number(job[1]) < 100000000000000 ? `<${ethers.formatEther(100000000000000)}` : `${(Number(ethers.formatEther(job[1]))).toFixed(4)}`}Ξ</span>
