@@ -31,17 +31,17 @@ contract DeMark is Ownable, IDeMark {
 
     modifier onlyProposer(uint256 jobId) {
         if(_msgSender() != jobs[jobId].proposer) {
-            revert NotProposer();
+            revert("Caller not proposer"); //NotProposer();
         }
         _;
     }
 
-    modifier onlyCompletor(uint256 jobId) {
-        if(_msgSender() != jobs[jobId].completedBy) {
-            revert NotCompletor();
-        }
-        _;
-    }
+    // modifier onlyCompletor(uint256 jobId) {
+    //     if(_msgSender() != jobs[jobId].completedBy) {
+    //         revert NotCompletor();
+    //     }
+    //     _;
+    // }
 
     function setPlatformFee(uint256 _platformFee) external payable onlyOwner {
         platformFee = _platformFee;
@@ -57,7 +57,7 @@ contract DeMark is Ownable, IDeMark {
 
     function proposeJob(string memory _jobDescription) external payable override {
         if(msg.value < 100) {
-            revert PayoutLowerThan100Wei();
+            revert("Payout must be > 100Wei"); //PayoutLowerThan100Wei();
         }
         jobs.push(Job(_msgSender(), msg.value, _jobDescription, address(0), block.timestamp, 0, 0, 0));
 
@@ -66,7 +66,7 @@ contract DeMark is Ownable, IDeMark {
 
     function cancelJob(uint256 jobId) external payable onlyProposer(jobId) override {
         if(jobs[jobId].completedBy != address(0)) {
-            revert AlreadyCompletedOrCanceled();
+            revert("Already completed or canceled"); //AlreadyCompletedOrCanceled();
         }
         jobs[jobId].completedBy = jobs[jobId].proposer; // Protects from reentrancy
 
@@ -78,19 +78,19 @@ contract DeMark is Ownable, IDeMark {
 
     function submitSolution(uint256 jobId, address _solutionContract) external payable override {
         if(_msgSender() == jobs[jobId].proposer) {
-            revert ProposerCannotSubmit();
+            revert("Proposer cannot submit"); //ProposerCannotSubmit();
         }
         if(!isContract(_solutionContract)){
-            revert NotContract();
+            revert("Submission not a contract"); //NotContract();
         }
 
         solution = MarketBuyable(_solutionContract);
 
         if(!solution.isApproved(address(this))) {
-            revert ContractNotBuyable();
+            revert("Marketplace does not have permission"); //ContractNotBuyable();
         }
         if(solution.owner() != _msgSender()) {
-            revert SenderNotContractOwner();
+            revert("Sender not contract owner"); //SenderNotContractOwner();
         }
 
         submissions[jobId].push(Submission(_msgSender(), _solutionContract));
@@ -99,12 +99,12 @@ contract DeMark is Ownable, IDeMark {
 
     function markComplete(uint256 jobId, uint256 submissionId) external payable override {
         if(jobs[jobId].completedBy != address(0)) {
-            revert AlreadyCompletedOrCanceled();
+            revert("Already completed or canceled"); //AlreadyCompletedOrCanceled();
         }
         jobs[jobId].completedBy = submissions[jobId][submissionId].submitter; // Protects from reentrancy
 
         if(submissions[jobId][submissionId].submitter == address(0)) {
-            revert NotASubmission();
+            revert("Not a submission"); //NotASubmission();
         }
         /**
             @note Will need to control for smart contracts that have malicious code pretending
@@ -136,7 +136,7 @@ contract DeMark is Ownable, IDeMark {
 
     function withdrawPlatformFees() external payable onlyOwner {
         if(accumulatedFees == 0) {
-            revert();
+            revert("No fees to withdraw");
         }
         uint256 val = accumulatedFees;
         accumulatedFees = 0; // Protects from reentrancy
