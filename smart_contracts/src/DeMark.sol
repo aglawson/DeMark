@@ -144,11 +144,11 @@ contract DeMark is Ownable, IDeMark {
         (bool success,) = payable(owner()).call{value: val}("");
         require(success, "Transfer failure");
     }
-    
+
     function getIncompleteJobs() public view returns (Job[] memory) {
         uint256 count = 0;
         for (uint256 i = 0; i < jobs.length; i++) {
-            if (jobs[i].completedAt == 0) {
+            if (jobs[i].completedBy == address(0)) {
                 count++;
             }
         }
