@@ -4,17 +4,16 @@
     @note NEED TO REFACTOR FOR DEMARK INTEROPERABILITY
  */
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import "./Ownable.sol";
 
 contract MarketBuyable is Ownable {
+
+    event ContractPurchased(address seller, address buyer);
+
     mapping(address => bool) public approvedMarketplaces;
     address[] public approvals;
-
-    event listed(address seller, address contractAddress, uint256 price);
-    event bought(address seller, address buyer, address contractAddress, uint256 price);
-    event unlisted(address seller, address contractAddress);
 
     constructor() Ownable(_msgSender()) {}
 
@@ -62,6 +61,10 @@ contract MarketBuyable is Ownable {
     }
 
     function marketTransferOwnership(address _newOwner) external marketplaceOnly {
+        address seller = owner();
+
         _transferOwnership(_newOwner);
+
+        emit ContractPurchased(seller, _newOwner);
     }
 }

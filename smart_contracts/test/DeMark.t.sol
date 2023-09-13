@@ -20,7 +20,7 @@ import {MarketBuyable} from "../src/MarketBuyable.sol";
     error OwnableUnauthorizedAccount(address account);
 
 contract ContractForSale is MarketBuyable{
-    constructor(address marketplace) MarketBuyable(marketplace) {}
+    constructor(address marketplace) {}
 }
 
 contract CounterTest is Test {
@@ -33,7 +33,8 @@ contract CounterTest is Test {
     }
 
     function test_CFSInitializedCorrectly() public {
-        assertEq(cfs.marketplaceContract(), address(demark));
+        cfs.approveMarketplace(address(demark));
+        assertEq(cfs.isApproved(address(demark)), true);
     }
 
     function test_platformFeeIs10() public {
