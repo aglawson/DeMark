@@ -180,7 +180,7 @@ function App() {
         <h1>Open Jobs</h1>
         <div className='jobs'>
           {jobs.map((job, index) => (
-            <div className='job' key={index}>
+            <div className='job' key={index} style={{display: job[3] == '0x0000000000000000000000000000000000000000' ? 'none' : ''}}>
               <div className='job-info'>
               <span className='client'>{job[0]}</span>
                 <h2>{job[2]}</h2>

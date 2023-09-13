@@ -37,26 +37,20 @@ interface IDeMark {
      */
     function proposeJob(string memory _jobDescription) external payable;
 
+    /**
+        @dev cancels a job. Must be called by job proposer. 
+        cancelled jobs can be identified by the fact that the 
+        completedBy and proposer addresses will be identical.
+     */
     function cancelJob(uint256 jobId) external payable;
 
+    /**
+
+     */
     function submitSolution(uint256 jobId, address _solutionContract) external payable;
 
     /**
         @dev emits a 'JobCompleted' event
     */
     function markComplete(uint256 jobId, uint256 submissionId)external payable;
-
-    /**
-        @dev allows job proposer to rate their experience with job completor
-     */
-    function rateCompletor(uint256 jobId, uint8 rating) external payable;
-    /**
-        @dev allows job completer to rate their experience with the job proposer
-     */
-    function rateProposer(uint256 jobId, uint8 rating) external payable;
-
-    /**
-        @dev calculates average rating of 'user' for their role as 'proposerOrCompletor'
-     */
-    function getAverageRating(string memory proposerOrCompletor, address user) external view returns(uint256);
 }
