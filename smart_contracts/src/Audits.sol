@@ -26,7 +26,7 @@ contract Audits is AccessControl{
 
     mapping(address => Auditor) public auditors;
     constructor() {
-        _grantRole(AUDITOR, _msgSender());
+
     }
 
     function becomeAuditor() external payable {
@@ -47,6 +47,8 @@ contract Audits is AccessControl{
         emit AddStake(_msgSender(), msg.value, auditors[_msgSender()].stake);
     }
 
-
+    function auditPassed(address _contract, bool passed) external onlyRole(AUDITOR) {
+        // add logic to record answer to be checked later in ConflictResolution
+    }
 
 }
