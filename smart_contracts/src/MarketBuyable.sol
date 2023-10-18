@@ -4,7 +4,7 @@
     @note NEED TO REFACTOR FOR DEMARK INTEROPERABILITY
  */
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import "./Ownable.sol";
 

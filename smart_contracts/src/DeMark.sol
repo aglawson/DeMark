@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 import {Ownable} from "./Ownable.sol";
 import {IDeMark} from "./IDeMark.sol";
 import {MarketBuyable} from "./MarketBuyable.sol";
