@@ -16,15 +16,25 @@ contract Audits is AccessControl{
 
     event NewAuditor(address indexed auditor, uint256 indexed initialStake);
     event AddStake(address indexed auditor, uint256 indexed deposit, uint256 indexed newTotalStake);
+    event AuditSubmitted(address indexed auditor, bool passed, uint256 weight);
 
     struct Auditor {
         address wallet;
         uint256 stake;
-        uint256 weight;
+        uint256 totalWeight;
+        uint256 allocatedWeight;
         uint256 createdAt;
     }
-
     mapping(address => Auditor) public auditors;
+
+    struct Audit {
+        address _contract;
+        address auditor;
+        bool passed;
+        uint256 weight;
+    }
+    mapping(address => Audit) public audits;
+
     constructor() {
 
     }
@@ -33,7 +43,7 @@ contract Audits is AccessControl{
         require(msg.value > 0, "Value must be > 0");
         require(!hasRole(AUDITOR, _msgSender()), "Already auditor");
 
-        auditors[_msgSender()] = Auditor(_msgSender(), msg.value, 1, block.timestamp);
+        auditors[_msgSender()] = Auditor(_msgSender(), msg.value, 1, 0, block.timestamp);
         _grantRole(AUDITOR, _msgSender());
 
         emit NewAuditor(_msgSender(), msg.value);
@@ -47,8 +57,17 @@ contract Audits is AccessControl{
         emit AddStake(_msgSender(), msg.value, auditors[_msgSender()].stake);
     }
 
-    function auditPassed(address _contract, bool passed) external onlyRole(AUDITOR) {
+    function submitAudit(address _contract, bool passed, uint256 weight) external onlyRole(AUDITOR) {
         // add logic to record answer to be checked later in ConflictResolution
+        require(
+            auditors[_msgSender()].allocatedWeight + weight <= auditors[_msgSender()].totalWeight, 
+            "Auditor has insufficient weight"
+        );
+
+        auditors[_msgSender()].allocatedWeight += weight;
+        audits[_msgSender()] = Audit(_contract, _msgSender(), passed, weight);
+
+        emit AuditSubmitted(_msgSender(), passed, weight);
     }
 
 }
